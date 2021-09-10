@@ -1,32 +1,24 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  ObjectIdColumn,
-  ObjectID,
-  Column,
-  CreateDateColumn,
-} from 'typeorm';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
-@Entity()
+export type SalesReportDocument = SalesReport & Document;
+
+@Schema()
 export class SalesReport {
-  @ObjectIdColumn()
-  id: ObjectID;
-
-  @Column()
+  @Prop()
   user_name: string;
 
-  @Column({ type: 'int' })
+  @Prop()
   age: number;
 
-  @Column()
+  @Prop()
   height: number;
 
-  @Column()
+  @Prop()
   sale_amount: number;
 
-  @Column()
+  @Prop()
   last_purchase_date: Date;
-
-  @CreateDateColumn()
-  created_at: Date;
 }
+
+export const SalesReportSchema = SchemaFactory.createForClass(SalesReport);

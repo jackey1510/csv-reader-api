@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { __prod__ } from '../constants';
-import { createConnection } from 'typeorm';
+import { createConnection, getMongoManager } from 'typeorm';
 // import { config } from 'dotenv-safe';
 
 // config();
@@ -13,9 +13,9 @@ export const databaseProviders = [
       return await createConnection({
         type: 'mongodb',
         url: configService.get<string>('DATABASE_URL')!,
-        logging: !__prod__,
+        // logging: !__prod__,
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-        synchronize: true,
+        // synchronize: true,
       }).catch((err) => console.log(err));
     },
   },
