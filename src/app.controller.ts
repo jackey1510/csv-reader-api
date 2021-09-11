@@ -2,14 +2,12 @@ import {
   Controller,
   Get,
   Post,
-  UseInterceptors,
+  Query,
   UploadedFile,
-  BadRequestException,
-  Param,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AppService } from './app.service';
-import { Express } from 'express';
 
 @Controller()
 export class AppController {
@@ -23,8 +21,8 @@ export class AppController {
 
   @Get('sales/report')
   async getReport(
-    @Param('startDate') startDate?: Date,
-    @Param('endDate') endDate?: Date,
+    @Query('startDate') startDate?: Date,
+    @Query('endDate') endDate?: Date,
   ) {
     return this.appService.getRecord(startDate, endDate);
   }

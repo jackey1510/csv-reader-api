@@ -1,59 +1,57 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { CsvParser, ParsedData } from 'nest-csv-parser';
-import {
-  Connection,
-  FindConditions,
-  getMongoRepository,
-  MongoRepository,
-} from 'typeorm';
-
+import { ConfigService } from '@nestjs/config';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import * as fs from 'fs';
-import { SalesReport } from './entity/sales.report.entity';
+import { Model } from 'mongoose';
+import { CsvParser, ParsedData } from 'nest-csv-parser';
+import { SalesReport, SalesReportDocument } from './entity/sales.report.entity';
 
-// class SalesReport {
-//   user_name: string;
-
-//   age: number;
-
-//   height: number;
-
-//   sale_amount: number;
-
-//   last_purchase_date: Date;
-
-//   created_at: Date;
-// }
 @Injectable()
 export class AppService {
-  private readonly salesReportRepository;
+  private logger = new Logger(AppService.name);
   constructor(
-    private readonly csvParser: CsvParser, // @Inject('SALES_REPORT_REPOSITORY') // private readonly salesReportRepository: MongoRepository<SalesReport>,
-  ) // @Inject('DATABASE_CONNECTION')
-  // private readonly db: Connection,
-  {
-    this.salesReportRepository = db.getRepository(SalesReport);
-  }
+    private readonly csvParser: CsvParser,
+    @InjectModel(SalesReport.name)
+    private salesReportModel: Model<SalesReportDocument>,
+  ) {}
 
   async saveRecord(file: Express.Multer.File) {
     const filePath = __dirname + '/../' + file.path;
     if (!file.originalname.endsWith('.csv')) {
+      this.removeFile(filePath);
       throw new BadRequestException('File must be csv');
     }
     const stream = fs.createReadStream(filePath);
-    const sales: ParsedData<SalesReport> = await this.csvParser.parse(
-      stream,
-      SalesReport,
-      undefined,
-      undefined,
-      { strict: true, separator: ',' },
-    );
 
-    fs.unlinkSync(filePath);
-
-    return await this.salesReportRepository.insertMany(sales.list);
+    const sales: ParsedData<SalesReport> = await this.csvParser
+      .parse(stream, SalesReport, undefined, undefined, {
+        strict: true,
+        separator: ',',
+      })
+      .catch(() => {
+        this.removeFile(filePath);
+        throw new BadRequestException('CSV cannot be parsed');
+      });
+    this.removeFile(filePath);
+    const result = await this.salesReportModel.insertMany(sales.list);
+    return `uploaded ${result.length} records`;
   }
 
   async getRecord(startDate?: Date, endDate?: Date) {
-    return this.salesReportRepository.find();
+    this.logger.log(`startDate: ${startDate}, endDate: ${endDate}`);
+    return this.salesReportModel.find({
+      LAST_PURCHASE_DATE: {
+        $gte: startDate ? startDate : new Date(0),
+        $lte: endDate ? endDate : new Date(),
+      },
+    });
+  }
+
+  private removeFile(path: string) {
+    fs.unlink(path, (err) => {
+      if (err) {
+        this.logger.error(err.message);
+      }
+    });
   }
 }

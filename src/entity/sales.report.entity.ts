@@ -5,20 +5,20 @@ export type SalesReportDocument = SalesReport & Document;
 
 @Schema()
 export class SalesReport {
-  @Prop()
-  user_name: string;
+  @Prop({ required: true })
+  USER_NAME: string;
 
-  @Prop()
-  age: number;
+  @Prop({ validate: { validator: Number.isInteger }, required: true })
+  AGE: number;
 
-  @Prop()
-  height: number;
+  @Prop({ required: true })
+  HEIGHT: number;
 
-  @Prop()
-  sale_amount: number;
+  @Prop({ required: true })
+  SALE_AMOUNT: number;
 
-  @Prop()
-  last_purchase_date: Date;
+  @Prop({ required: true })
+  LAST_PURCHASE_DATE: Date;
 }
 
 export const SalesReportSchema = SchemaFactory.createForClass(SalesReport);
