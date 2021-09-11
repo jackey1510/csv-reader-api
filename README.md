@@ -36,6 +36,8 @@ $ npm run start:prod
 docker compose up
 ```
 
+The app will run on http://localhost:3000 by default
+
 ## Test
 
 ```bash
