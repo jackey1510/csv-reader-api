@@ -9,10 +9,25 @@ import * as fs from 'fs';
 
 describe('AppService', () => {
   let service: AppService;
-  let mockRecords: SalesReport[] = [];
+  let mockRecords: SalesReport[] = [
+    {
+      AGE: 20,
+      HEIGHT: 166,
+      LAST_PURCHASE_DATE: new Date(),
+      SALE_AMOUNT: 1000,
+      USER_NAME: 'David',
+    },
+    {
+      AGE: 22,
+      HEIGHT: 177,
+      LAST_PURCHASE_DATE: new Date(),
+      SALE_AMOUNT: 10000,
+      USER_NAME: 'Davidson',
+    },
+  ];
 
   let mockSalesReportModel = {
-    insertMany: jest.fn().mockReturnValue('test value'),
+    insertMany: jest.fn().mockReturnValue(mockRecords),
     find: jest.fn().mockReturnValue(mockRecords),
   };
 
@@ -46,7 +61,7 @@ describe('AppService', () => {
         destination: null,
         fieldname: 'field',
         filename: 'file.csv',
-        path: './',
+        path: '',
         size: 100,
         originalname: 'file.csv',
         encoding: 'utf-8',
@@ -69,7 +84,7 @@ describe('AppService', () => {
       jest.spyOn(csvParser, 'parse').mockImplementation(async () => {
         return {
           list: [],
-          count: 1,
+          count: 0,
           offset: 0,
           total: 1,
           then: new Promise(jest.fn()),
@@ -78,7 +93,7 @@ describe('AppService', () => {
       jest.spyOn(fs, 'unlink').mockImplementation();
       jest.spyOn(fs, 'createReadStream').mockImplementation();
       const res = await service.saveRecord(mockFile);
-      expect(res).toEqual('test value');
+      expect(res).toEqual('uploaded 2 records');
     });
   });
 
