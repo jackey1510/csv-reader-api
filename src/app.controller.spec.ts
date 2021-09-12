@@ -1,4 +1,3 @@
-import { CsvModule } from 'nest-csv-parser';
 import { ConfigModule } from '@nestjs/config';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -24,7 +23,7 @@ describe('AppController', () => {
           useValue: mockSalesReportModel,
         },
       ],
-      imports: [ConfigModule.forRoot(), CsvModule],
+      imports: [ConfigModule.forRoot()],
     }).compile();
 
     appController = app.get<AppController>(AppController);

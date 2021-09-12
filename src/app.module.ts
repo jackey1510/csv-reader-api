@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule, MongooseModuleOptions } from '@nestjs/mongoose';
 import { MulterModule } from '@nestjs/platform-express';
-import { CsvModule } from 'nest-csv-parser';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SalesReport, SalesReportSchema } from './entity/sales.report.entity';
@@ -14,7 +13,6 @@ import { SalesReport, SalesReportSchema } from './entity/sales.report.entity';
       dest: './files',
       preservePath: true,
     }),
-    CsvModule,
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

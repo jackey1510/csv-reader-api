@@ -4,7 +4,8 @@ import { TestingModule, Test } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { SalesReport } from './entity/sales.report.entity';
-import { CsvModule, CsvParser } from 'nest-csv-parser';
+import { PassThrough } from 'stream';
+
 import * as fs from 'fs';
 
 describe('AppService', () => {
@@ -32,9 +33,9 @@ describe('AppService', () => {
   };
 
   let mockFile: Express.Multer.File;
-  let csvParser: CsvParser;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AppService,
@@ -43,11 +44,10 @@ describe('AppService', () => {
           useValue: mockSalesReportModel,
         },
       ],
-      imports: [ConfigModule.forRoot(), CsvModule],
+      imports: [ConfigModule.forRoot()],
     }).compile();
 
     service = module.get<AppService>(AppService);
-    csvParser = module.get<CsvParser>(CsvParser);
   });
 
   it('should be defined', () => {
@@ -60,8 +60,8 @@ describe('AppService', () => {
         buffer: null,
         destination: null,
         fieldname: 'field',
-        filename: 'file.csv',
-        path: '',
+        filename: 'MOCK_DATA.csv',
+        path: __dirname + '/../test/file/',
         size: 100,
         originalname: 'file.csv',
         encoding: 'utf-8',
@@ -80,18 +80,13 @@ describe('AppService', () => {
       }
     });
 
-    it('should return test value', async () => {
-      jest.spyOn(csvParser, 'parse').mockImplementation(async () => {
-        return {
-          list: [],
-          count: 0,
-          offset: 0,
-          total: 1,
-          then: new Promise(jest.fn()),
-        };
-      });
+    it('should return 2', async () => {
+      jest
+        .spyOn(service, 'createReadStreamAndUploadToDb')
+        .mockImplementation(async () => {
+          return 2;
+        });
       jest.spyOn(fs, 'unlink').mockImplementation();
-      jest.spyOn(fs, 'createReadStream').mockImplementation();
       const res = await service.saveRecord(mockFile);
       expect(res).toEqual('uploaded 2 records');
     });
