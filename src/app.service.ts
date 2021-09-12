@@ -1,16 +1,14 @@
-import { ConfigService } from '@nestjs/config';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as fs from 'fs';
 import { Model } from 'mongoose';
-import { CsvParser, ParsedData } from 'nest-csv-parser';
 import { SalesReport, SalesReportDocument } from './entity/sales.report.entity';
+import * as csv from 'csv-parser';
 
 @Injectable()
 export class AppService {
   private logger = new Logger(AppService.name);
   constructor(
-    private readonly csvParser: CsvParser,
     @InjectModel(SalesReport.name)
     private salesReportModel: Model<SalesReportDocument>,
   ) {}
@@ -21,20 +19,43 @@ export class AppService {
       this.removeFile(filePath);
       throw new BadRequestException('File must be csv');
     }
-    const stream = fs.createReadStream(filePath);
+    const total = await this.createReadStreamAndUploadToDb(filePath);
 
-    const sales: ParsedData<SalesReport> = await this.csvParser
-      .parse(stream, SalesReport, undefined, undefined, {
-        strict: true,
-        separator: ',',
-      })
-      .catch(() => {
-        this.removeFile(filePath);
-        throw new BadRequestException('CSV cannot be parsed');
-      });
     this.removeFile(filePath);
-    const result = await this.salesReportModel.insertMany(sales.list);
-    return `uploaded ${result.length} records`;
+
+    return `uploaded ${total} records`;
+  }
+
+  async createReadStreamAndUploadToDb(filePath: string) {
+    const dataList: SalesReport[] = [];
+    let total = 0;
+
+    const stream = fs
+      .createReadStream(filePath)
+      .pipe(csv())
+      .on('data', async (row: SalesReport) => {
+        if (dataList.length < 1000) {
+          dataList.push(row);
+        } else {
+          stream.pause();
+          const result = await this.salesReportModel.insertMany(dataList);
+          total += result.length;
+          dataList.length = 0;
+          stream.resume();
+        }
+      });
+
+    const end = new Promise(function (resolve, reject) {
+      stream.on('end', async () => {
+        resolve(true);
+      });
+      stream.on('error', reject);
+    });
+
+    await end;
+    await this.salesReportModel.insertMany(dataList);
+    total += dataList.length;
+    return total;
   }
 
   async getRecord(startDate?: Date, endDate?: Date) {
