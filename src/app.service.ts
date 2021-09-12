@@ -38,7 +38,11 @@ export class AppService {
           dataList.push(row);
         } else {
           stream.pause();
-          const result = await this.salesReportModel.insertMany(dataList);
+          const result = await this.salesReportModel
+            .insertMany(dataList)
+            .catch(() => {
+              throw new BadRequestException('Invalid CSV');
+            });
           total += result.length;
           dataList.length = 0;
           stream.resume();
@@ -53,7 +57,9 @@ export class AppService {
     });
 
     await end;
-    await this.salesReportModel.insertMany(dataList);
+    await this.salesReportModel.insertMany(dataList).catch(() => {
+      throw new BadRequestException('Invalid CSV');
+    });
     total += dataList.length;
     return total;
   }
